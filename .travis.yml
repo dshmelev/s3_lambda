@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - "6"
+deploy:
+  provider: lambda
+  function_name: s3_lambda
+  region: us-west-2
+  role: arn:aws:iam::693079299579:role/s3_lambda
+  runtime: nodejs6.10
+  handler_name: handler
+  access_key_id: AKIAJCJX7W24I5WRAUMQ
+  secret_access_key:
+    secure: UQTesjEzSF24YLGSeAqlzK9w90mpd81uqeZPpd5mOkfCNf6nNK3/dCbcDr6Ezvbt4M0SnBouAKA7YK6pbju/RtmNfp44QyhxCik8hh6r1x5aD0zevdkhj/LMPJ4egW7vC+QKso5fsNts/hNzJfEYsTFBosNbPspIW1ngxf6+cKJuv72aS7U4K3Dak4M0PSfjIMRGrNluHBOW8rxJpl4qlmcZAdf/N3FFmxvn5bhhyVvAJmmOkybWQCuKS+tXVEzShpY9Mn1m5dW7rN05l14U3eGBrM7qpKfamYBugOpL3p4NPo81eQ9ms0TcVYiqSCCs3N3jsXR/95aRp1yX9V6++xbwRAQJc37OFTTypXVQubmShPhqq84ovoGNDxwrvYdUfew4qNQ7l/gHvBWDxapFJYaZukkTmWKpCY9MGGmhitmEWq5Xadf/Wf5NLLZayV2eOtGRnY2SXESRlUK1alu4Hr7ykZ+cZ2raKLT1zdALzwkCSlTrfX5mMcKiHxPsYEuSwky/DgbBuuksCd8ZEBkO56wTmFuoINAH0lQPRGIjgS7LIjRYjL7Jp2HhQOMS5Fb30AcMmn/eGUQUHbHiIIIeWs6JTPJMbKTny3T2prX6PyJ4S191Toh3eOo3GutxCOSRFYZbSnTMMC+r2kqkofXgwJATchvEVwiidJYUlCezSN0=
