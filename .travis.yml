@@ -3,7 +3,7 @@ node_js:
   - "6"
 deploy:
   provider: lambda
-  function_name: s3_lambda
+  function_name: s3_lambda_node
   region: us-west-2
   role: arn:aws:iam::693079299579:role/s3_lambda
   runtime: nodejs6.10

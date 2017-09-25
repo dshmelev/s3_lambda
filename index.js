@@ -1,56 +1,78 @@
 'use strict';
 
-var AWS      = require('aws-sdk');
-var Promise = require('promise');
-var s3Stream = require('s3-upload-stream')(new AWS.S3());
+var Promise  = require('promise');
 var archiver = require('archiver');
-var s3 = new AWS.S3();
+var AWS      = require('aws-sdk');
+var s3Stream = require('s3-upload-stream')(new AWS.S3());
+var s3       = new AWS.S3()
 
-exports.handler = function (data, context) => {
-  var archive = archiver('zip');
+exports.handler = function (params, context) {
+    var archive = archiver('zip');
+    var objectKeys = [];
 
-  var upload = s3Stream.upload({
-    "Bucket": data.outputBucket,
-    "Key": data.outputKey
-  });
-
-  archive.pipe(upload);
-
-  var allDonePromise = new Promise(function(resolveAllDone) {
-    upload.on('uploaded', function (details) {
-      resolveAllDone();
+    var upload = s3Stream.upload({
+        "Bucket": params.outputBucket,
+        "Key": params.outputKey
     });
-  });
 
-  allDonePromise.then(function() {
-    context.done(null, '');
-  });
+    archive.pipe(upload);
 
-  var getObjectPromises = [];
-  for(var i in data.keys) {
-    (function(itemKey) {
-      itemKey = decodeURIComponent(itemKey).replace(/\+/g,' ');
-      var getPromise = new Promise(function(resolveGet) {
-        s3.getObject({
-          Bucket: data.bucket,
-          Key : itemKey
-        }, function(err, data) {
-          if (err) {
-            console.log(itemKey, err, err.stack);
-            resolveGet();
-          }
-          else {
-            var itemName = itemKey.substr(itemKey.lastIndexOf('/'));
-            archive
-              .append(data.Body, { name: itemName });
-            resolveGet();
-          }
+    var allDonePromise = new Promise(function(resolveAllDone) {
+        upload.on('uploaded', function (details) {
+            resolveAllDone();
         });
-      });
-      getObjectPromises.push(getPromise);
-    })(data.keys[i]);
-  }
-  Promise.all(getObjectPromises).then(function() {
-    archive.finalize();
-  });
+    });
+
+    allDonePromise.then(function() {
+        context.done(null, '');
+    });
+
+    var getObjectPromises = [];
+
+    console.log("ListObjects: " + params.inputBucket )
+    var listPromise = new Promise(function(resolveList) {
+        s3.listObjects({
+            Bucket: params.inputBucket,
+        }, function(err, data) {
+            if (err) {
+                console.log(err, err.stack);
+            } else {
+                objectKeys = data.Contents;
+                resolveList();
+            }
+        })
+    });
+
+    listPromise.then(function() {
+        for(var i in objectKeys) {
+            (function(item) {
+                console.log("GetObject: " + item.Key)
+                var getPromise = new Promise(function(resolveGet) {
+                    s3.getObject({
+                        Bucket: params.inputBucket,
+                        Key:    item.Key,
+                    }, function(err, data) {
+                        if (err) {
+                            console.log(item.Key, err, err.stack);
+                        } else {
+                            console.log("ArchiveObject: " + item.Key);
+                            archive.append(data.Body, { name: item.Key });
+                            resolveGet();
+                        }
+                    });
+                })
+                getObjectPromises.push(getPromise);
+            })(objectKeys[i]);
+        }
+        Promise.all(getObjectPromises).then(function() {
+            console.log("ArchveFinalize");
+            archive.finalize();
+        });
+    });
 };
+
+exports.handler({
+    inputBucket:  "s3lambda-data",
+    outputBucket: "s3lambda-backup",
+    outputKey:    "backup-node.zip",
+})
